@@ -1,37 +1,86 @@
-import React from "react";
+import React, { useEffect, useCallback } from "react";
 
-import { View,Text, StyleSheet,Button } from "react-native";
+import { 
+    View,
+    Text,
+    Image, 
+    StyleSheet,
+    Button, 
+    ScrollView } from "react-native";
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
-import { MEALS } from '../data/dummy-data';
+import { useSelector,useDispatch } from 'react-redux';
+
 import CustomHeaderButton from '../components/headerButton.component';
+import { toggleFavorite } from "../redux/actions/meals";
+
+const ListItem = props => {
+    return (
+        <View style={styles.listItem}>
+            <Text style={{fontFamily:'open-sans'}}>{props.children}</Text>
+        </View>
+    );
+};
+
 
 const MealDetailScreen = props => {
     const mealId = props.navigation.getParam('mealId');
-    const selectedMeal = MEALS.find(meal => meal.id === mealId);
+    const meals = useSelector(state => state.meals.meals)
+    const favMeal=  useSelector(state => 
+        state.meals.favoriteMeals.some(meal => meal.id === mealId)
+    );
+    const selectedMeal = meals.find(meal => meal.id === mealId);
     
+    const dispatch  = useDispatch();
+
+    const toggleFavHandler = useCallback(() => {
+        dispatch(toggleFavorite(mealId))
+    },[dispatch,mealId])
+    
+    useEffect(()=> {
+        props.navigation.setParams({toggleFav: toggleFavHandler })
+    },[toggleFavHandler]);
+
+    useEffect(() => {
+        props.navigation.setParams({isFav: favMeal})
+    },[favMeal])
+
     return(
-        <View style={styles.screen}>
-            <Text>{selectedMeal.title}</Text>
-            <Button title="GO BACK TO CATEGORY" onPress={() => {
-                props.navigation.popToTop();
-            }}/>
-        </View>
+        <ScrollView>
+            <Image source={{uri:selectedMeal.imageUrl}} style={styles.image} />
+            <View style={styles.detail}>
+                <Text style={styles.text}>{selectedMeal.duration}m</Text>
+                <Text style={styles.text}>{selectedMeal.complexity.toUpperCase()}</Text>
+                <Text style={styles.text}>{selectedMeal.affordability.toUpperCase()}</Text>
+		    </View>
+            <Text style={styles.title}>Ingredients</Text>
+            {selectedMeal.ingredients.map(ingredient => 
+                <ListItem key={ingredient}>{ingredient}</ListItem>
+            )}
+            <Text style={styles.title}>Steps</Text>
+            {selectedMeal.steps.map(step => 
+                <ListItem key={step}>{step}</ListItem>
+            )}
+            <View>
+                <Button title="GO BACK TO CATEGORY" onPress={() => {
+                    props.navigation.popToTop();
+                }}/>
+            </View>            
+        </ScrollView>
     )
 };
 
 MealDetailScreen.navigationOptions = (navigationData) => {
-    const mealId = navigationData.navigation.getParam('mealId');
-    const selectedCategory = MEALS.find(meal => meal.id === mealId);
+    const mealTitle = navigationData.navigation.getParam('mealTitle');
+    const toggleFavorite = navigationData.navigation.getParam('toggleFav');
+    const isFavMeal = navigationData.navigation.getParam('isFav');
 
     return {
-        headerTitle: selectedCategory.title,
+        headerTitle: mealTitle,
         headerRight: () => <HeaderButtons HeaderButtonComponent={CustomHeaderButton}>
             <Item 
                 title="Favorite" 
-                iconName='ios-star' 
-                onPress={()=>{
-                console.log("Favorite")
-                }}
+                iconName={isFavMeal ? 'ios-star' : 'ios-star-outline'}
+                onPress={toggleFavorite}
             />
         </HeaderButtons>
         
@@ -40,10 +89,29 @@ MealDetailScreen.navigationOptions = (navigationData) => {
 }
 
 const styles = StyleSheet.create({
-    screen: {
-        flex: 1,
-        justifyContent:'center',
-        alignItems: 'center'
+    image: {
+        width: '100%',
+        height: 200      
+    },
+
+    detail: {
+        flexDirection: "row",
+        padding: 15,
+        justifyContent: 'space-around'
+    },
+
+    title: {
+        fontFamily: 'open-sans-bold',
+        fontSize: 22,
+        textAlign: 'center'
+    },
+
+    listItem: {
+        marginVertical: 10,
+        marginHorizontal: 20,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        padding: 10
     }
 });
 
