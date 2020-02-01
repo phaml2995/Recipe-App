@@ -308,7 +308,7 @@ export const MEALS = [
   new Meal(
     'm10',
     ['c2', 'c5', 'c10'],
-    'Asparagus Salad with Cherry Tomatoes',
+    'Asparagus Salad',
     'luxurious',
     'simple',
     'https://cdn.pixabay.com/photo/2018/04/09/18/26/asparagus-3304997_1280.jpg',
